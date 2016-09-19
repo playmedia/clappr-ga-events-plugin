@@ -9,12 +9,19 @@
   <script>
     (function () {
       // Clappr.Log.setLevel(0)
-      var streamUrl = 'https://static.playmedia-cdn.net/resources/sample/h264_sintel_trailer-1080p.mp4'
-      // var streamUrl = 'http://sample.vodobox.net/skate_phantom_flex_4k/skate_phantom_flex_4k.m3u8'
+
+      // HLS VOD
+      // var videoUrl = 'http://www.streambox.fr/playlists/x36xhzz/x36xhzz.m3u8', videoLabel = 'Big Buck Bunny'
+
+      // HLS Live with DVR
+      // var videoUrl = 'http://live-api.miraclechannel.com/hls/miracle1.m3u8', videoLabel = 'Miracle Channel'
+
+      // MP4 VOD
+      var videoUrl = 'https://static.playmedia-cdn.net/resources/sample/h264_sintel_trailer-1080p.mp4', videoLabel = 'Sintel'
 
       var player = new Clappr.Player({
         parentId: "#player",
-        source: streamUrl,
+        source: videoUrl,
         disableKeyboardShortcuts: true,
         disableVideoTagContextMenu: true,
         autoSeekFromUrl: false,
@@ -28,13 +35,15 @@
           // createFieldsObject: {
           //   name: 'MyTrackerName',
           // },
-          eventCategory: 'Trailer',
-          eventLabel: 'Sintel',
+          // eventCategory: 'MyCategory',
+          eventLabel: videoLabel,
           // eventValueAuto: true,
           // eventToTrack: ['play', 'seek', 'pause', 'stop', 'ended', 'volume', 'buffering', 'bufferfull'],
           // sendPlayOnce: true,
           // sendExceptions: true,
           // sendExceptionsMsg: true,
+          // progressSeconds: [10, 20, 30, 40, 50, 60],
+          // progressPercent: [25, 50, 75, 100],
         },
       })
 
