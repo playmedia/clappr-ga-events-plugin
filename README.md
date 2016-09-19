@@ -184,6 +184,56 @@ This option must be used with `sendExceptions`, otherwise is ignored.
 
 __Note:__ this option is disabled by default because error messages may contains sensitive informations.
 
+## progressPercent, progressPercentCategory & progressPercentAction
+
+__Note:__ These options are __ignored__ if player container playback type is __LIVE__. _(duration is unknown)_
+
+`progressPercent` __optional__ property is an Array of percentage values (must be integer), where each value is a video progress event to send to Google Analytics. Default value is `[]`.
+
+`progressPercentCategory` __optional__ property is the [eventCategory](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#eventCategory) set to send video progress event. Default value is `undefined`, which default to `eventCategory` plugin option value.
+
+`progressPercentAction` __optional__ property is a Function which return the [eventAction](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#eventAction) set to send video progress event. Default value is `function(i) { return 'progress_' + i + 'p' }`, where `i` argument is the video progress percentage value.
+
+__Note:__ If user seek video past a progress event time range, then the "leaped" event is not send.
+
+```javascript
+  /* [...] */
+  gaEventsPlugin: {
+    trackingId: 'UA-XXXX-Y',
+    progressPercent: [25,50,75],
+    progressPercentCategory: 'Video percent', // default is 'Video'
+    progressPercentAction: function(i) { return i + '%' },
+  }
+  /* [...] */
+```
+
+Event label value used for video progress events is the `eventLabel` plugin option value.
+
+## progressSeconds, progressSecondsCategory & progressSecondsAction
+
+These __optional__ properties are exactly the same as "progress percent" above, but instead is progress duration in seconds. _(except for LIVE, read explanations below)_
+
+`progressSeconds` default value is `[]`.
+
+`progressSecondsCategory` default value is `undefined`, which default to `eventCategory` plugin option value.
+
+`progressSecondsAction` default value is `function(i) { return 'progress_' + i + 's' }`, where `i` argument is the video progress duration value.
+
+If playback type is __LIVE__, then events are send according time elapsed since __play__ event. If video __pause__, __seek__ or __stop__, then events are send again after Nth seconds. _(It use a Timer instead of referring to player position)_
+
+__Note:__ If user seek video past a progress event time range, then the "leaped" event is not send. _(seek is available only if video has DVR feature enabled)_
+
+```javascript
+  /* [...] */
+  gaEventsPlugin: {
+    trackingId: 'UA-XXXX-Y',
+    progressSeconds: [10,20,30,40,50],
+    progressSecondsCategory: 'Video progress', // default is 'Video'
+    progressSecondsAction: function(i) { return i + ' seconds' },
+  }
+  /* [...] */
+```
+
 # External Interface
 
 If tracker name is provided using the `createFieldsObject` plugin option, then `gaEventsTracker()` method is added to Clappr player instance. This method return the Google Analytics [tracker instance](https://developers.google.com/analytics/devguides/collection/analyticsjs/tracker-object-reference) associated to player.
