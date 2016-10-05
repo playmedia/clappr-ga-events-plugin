@@ -4,8 +4,9 @@
   "description": "Google Analytics Events plugin for Clappr player.",
   "main": "dist/clappr-ga-events-plugin.js",
   "scripts": {
-    "dev": "webpack",
-    "dist": "webpack -p",
+    "dist": "npm run dist-main && npm run dist-min",
+    "dist-main": "webpack --progress",
+    "dist-min": "webpack --progress -p --optimize-mangle --optimize-dedupe --output-filename clappr-ga-events-plugin.min.js",
     "watch": "webpack -w",
     "demo": "http-cli -r ./ -a 0.0.0.0 -p 8090",
     "check": "david"

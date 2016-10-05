@@ -9,7 +9,7 @@ Add both Clappr and the plugin scripts to your HTML:
 ```html
 <head>
   <script type="text/javascript" src="http://cdn.clappr.io/latest/clappr.min.js"></script>
-  <script type="text/javascript" src="dist/clappr-ga-events-plugin.js"></script>
+  <script type="text/javascript" src="dist/clappr-ga-events-plugin.min.js"></script>
 </head>
 ```
 
@@ -263,13 +263,7 @@ Install dependencies :
   npm install
 ```
 
-Dev. build :
-
-```shell
-  npm run dev
-```
-
-Dist build :
+Compile :
 
 ```shell
   npm run dist
