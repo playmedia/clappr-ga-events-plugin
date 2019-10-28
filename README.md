@@ -234,6 +234,31 @@ __Note:__ If user seek video past a progress event time range, then the "leaped"
   /* [...] */
 ```
 
+## progressEachSeconds, progressEachSecondsCategory & progressEachSecondsAction
+
+These __optional__ properties are again exactly the same, but instead send progress event each __N__ seconds.
+
+`progressEachSeconds` must be a positive integer, is the delay in seconds between two events.
+
+`progressEachSecondsCategory` default value is `undefined`, which default to `eventCategory` plugin option value.
+
+`progressEachSecondsAction` default value is `function(i) { return 'progress_' + i + 's' }`, where `i` argument is the video progress duration value.
+
+If playback type is __LIVE__, then events are send according time elapsed since __play__ event. If video __pause__, __seek__ or __stop__, then events are send again each Nth seconds. _(It use a Timer instead of referring to player position)_
+
+__Note:__ If user seek video past a progress event time range, then the "leaped" event is not send. _(seek is available only if video has DVR feature enabled)_
+
+```javascript
+  /* [...] */
+  gaEventsPlugin: {
+    trackingId: 'UA-XXXX-Y',
+    progressEachSeconds: 10,
+    progressEachSecondsCategory: 'Video progress', // default is 'Video'
+    progressEachSecondsAction: function(i) { return i + ' seconds' },
+  }
+  /* [...] */
+```
+
 # External Interface
 
 If tracker name is provided using the `createFieldsObject` plugin option, then `gaEventsTracker()` method is added to Clappr player instance. This method return the Google Analytics [tracker instance](https://developers.google.com/analytics/devguides/collection/analyticsjs/tracker-object-reference) associated to player.
