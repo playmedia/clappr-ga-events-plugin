@@ -104,8 +104,8 @@ export default class GaEventsPlugin extends CorePlugin {
     this._category = cfg.eventCategory || 'Video'
     this._label = cfg.eventLabel // Otherwise filled in bindEvents()
     this._setValue = cfg.eventValueAuto === true
-    this._events = $.isArray(cfg.eventToTrack) && cfg.eventToTrack || this._defaultEvents
-    this._eventMap = $.isPlainObject(cfg.eventMapping) && cfg.eventMapping || this._defaultEventMap
+    this._events = $.isArray(cfg.eventToTrack) && cfg.eventToTrack || this._defaultEvents // FIXME: merge with default ?
+    this._eventMap = $.isPlainObject(cfg.eventMapping) && cfg.eventMapping || this._defaultEventMap // FIXME: merge with default ?
     this._gaPlayOnce = cfg.sendPlayOnce === true
     this._gaEx = cfg.sendExceptions === true
     this._gaExDesc = cfg.sendExceptionsMsg === true
@@ -165,8 +165,10 @@ export default class GaEventsPlugin extends CorePlugin {
     return this._events.indexOf(e) !== -1
   }
 
-  _action(e) {
-    return this._eventMap[e]
+  _action(e, v) {
+    return $.isFunction(this._eventMap[e])
+      ? this._eventMap[e](v)
+      : this._eventMap[e]
   }
 
   _value(v) {
@@ -248,7 +250,7 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   onLoadedMetadata(metadata) {
-    this.gaEvent(this._category, this._action('loadedmetadata'), this._label)
+    this.gaEvent(this._category, this._action('loadedmetadata', metadata), this._label)
   }
 
   onPlay() {
@@ -256,7 +258,8 @@ export default class GaEventsPlugin extends CorePlugin {
       if (!this._doSendPlay) return
       this._doSendPlay = false
     }
-    this.gaEvent(this._category, this._action('play'), this._label, this._value(this.position))
+
+    this.gaEvent(this._category, this._action('play', this.position), this._label, this._value(this.position))
 
     this._withProgressTimer && this._startProgressTimer()
   }
@@ -290,7 +293,7 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   onSeek(pos) {
-    this._hasEvent('seek') && this.gaEvent(this._category, this._action('seek'), this._label, this._value(this.trunc(pos)))
+    this._hasEvent('seek') && this.gaEvent(this._category, this._action('seek', this.trunc(pos)), this._label, this._value(this.trunc(pos)))
     if (this._gaPlayOnce) this._doSendPlay = true
 
     // Adjust previous "percent" event value
@@ -302,21 +305,21 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   onPause() {
-    this._hasEvent('pause') && this.gaEvent(this._category, this._action('pause'), this._label, this._value(this.position))
+    this._hasEvent('pause') && this.gaEvent(this._category, this._action('pause', this.position), this._label, this._value(this.position))
     if (this._gaPlayOnce) this._doSendPlay = true
 
     this._withProgressTimer && this._stopProgressTimer()
   }
 
   onStop() {
-    this._hasEvent('stop') && this.gaEvent(this._category, this._action('stop'), this._label, this._value(this.position))
+    this._hasEvent('stop') && this.gaEvent(this._category, this._action('stop', this.position), this._label, this._value(this.position))
     if (this._gaPlayOnce) this._doSendPlay = true
 
     this._withProgressTimer && this._stopProgressTimer()
   }
 
   onEnded() {
-    this._hasEvent('ended') && this.gaEvent(this._category, this._action('ended'), this._label, this._value(this.position))
+    this._hasEvent('ended') && this.gaEvent(this._category, this._action('ended', this.position), this._label, this._value(this.position))
     if (this._gaPlayOnce) this._doSendPlay = true
 
     // Check for video ended progress events
@@ -329,7 +332,7 @@ export default class GaEventsPlugin extends CorePlugin {
     // Rate limit to avoid HTTP hammering
     clearTimeout(this._volumeTimer)
     this._volumeTimer = setTimeout(() => {
-      this.gaEvent(this._category, this._action('volume'), this._label, this._value(this.trunc(e)))
+      this.gaEvent(this._category, this._action('volume', this.trunc(e)), this._label, this._value(this.trunc(e)))
     }, 400)
   }
 
