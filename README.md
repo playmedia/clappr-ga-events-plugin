@@ -260,23 +260,11 @@ var tracker = player.gaEventsTracker();
 Install dependencies :
 
 ```shell
-  npm install
+  yarn
 ```
 
-Compile :
+Start HTTP dev server (http://0.0.0.0:8080) :
 
 ```shell
-  npm run dist
-```
-
-Watch mode :
-
-```shell
-  npm run watch
-```
-
-Start HTTP server (http://0.0.0.0:8080/demo/) :
-
-```shell
-  npm run demo
+  npm start
 ```
