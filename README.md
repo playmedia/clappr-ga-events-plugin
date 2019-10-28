@@ -115,7 +115,7 @@ Keep in mind that "Web Property / Property / Tracking ID" limit is 10 million hi
 
 ## eventMapping
 
-`eventMapping` __optional__ property is a plain Object used to set the [eventAction](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#eventAction) value for each container event. Default values are event name list listed above.
+`eventMapping` __optional__ property is a plain Object used to set the [eventAction](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#eventAction) value for each container event. Default values are event name list listed above. The value can also be a function _(argument value depends on event)_.
 
 ```javascript
   /* [...] */
@@ -128,7 +128,7 @@ Keep in mind that "Web Property / Property / Tracking ID" limit is 10 million hi
       loadedmetadata: 'MyLoadedmetadataEventLabel', // default is 'loadedmetadata'
       play: 'MyPlayEventLabel', // default is 'play'
       seek: 'MySeekEventLabel', // default is 'seek'
-      pause: 'MyPauseEventLabel', // default is 'pause'
+      pause: function(p) { return 'pause_at_'+p+'_seconds'; }, // default is 'pause'
       stop: 'MyStopEventLabel', // default is 'stop'
       ended: 'MyEndedEventLabel', // default is 'ended'
       volume: 'MyVolumeEventLabel', // default is 'volume'
