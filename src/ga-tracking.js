@@ -7,20 +7,27 @@
  * @param {string} Global name of analytics object. Defaults to 'ga'.
  * @param {boolean} Set to true to load the debug version of the analytics.js library.
  * @param {boolean} Set to true to enable trace debugging.
+ * @param {Function} onload callback
  */
-export default function(name='ga', debug, trace) {
+export default function(name='ga', debug, trace, cb) {
   // Preserve renaming support and minification
   let win = window, doc = document, el = 'script'
 
+  let onLoad = (r) => {
+    if (typeof cb === 'function') cb(r)
+  }
+
+  // Acts as a pointer to support renaming
+  win.GoogleAnalyticsObject || (win.GoogleAnalyticsObject = name)
+
   // Ensure analytics.js is not already loaded
-  if (win[name]) return
+  if (win[name] && (typeof win[name] === 'function')) {
+    return onLoad(true)
+  }
 
   if (trace) {
     win['ga_debug'] = {trace: true}
   }
-
-  // Acts as a pointer to support renaming
-  win.GoogleAnalyticsObject = name
 
   // Creates an initial ga() function
   // The queued commands will be executed once analytics.js loads
@@ -39,5 +46,6 @@ export default function(name='ga', debug, trace) {
   let script = doc.createElement(el)
   script.src = 'https://www.google-analytics.com/analytics' + (debug ? '_debug.js' : '.js')
   script.async = true
+  if (typeof cb === 'function') script.onload = () => { onLoad(true) }
   first.parentNode.insertBefore(script, first)
 }

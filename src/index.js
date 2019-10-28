@@ -11,34 +11,45 @@ export default class GaEventsPlugin extends CorePlugin {
     this._volumeTimer = null
     this._doSendPlay = true
     this.readPluginConfig(this.options.gaEventsPlugin)
-    gaTrackingSnippet(this._gaCfg.name, this._gaCfg.debug, this._gaCfg.trace)
-    this._ga('create', this._trackingId, this._createFieldsObject)
+    gaTrackingSnippet(this._gaCfg.name, this._gaCfg.debug, this._gaCfg.trace, (r) => {
+      r && this._ga('create', this._trackingId, this._createFieldsObject)
+    })
+  }
+
+  get __container() {
+    return this.core.activeContainer
+      ? this.core.activeContainer
+      : this.core.mediaControl.container
   }
 
   bindEvents() {
-    this.listenTo(this.core.mediaControl, Events.MEDIACONTROL_CONTAINERCHANGED, this.containerChanged)
-    this._container = this.core.getCurrentContainer()
-    if (this._container) {
+    if (Events.CORE_ACTIVE_CONTAINER_CHANGED) {
+      this.listenTo(this.core, Events.CORE_ACTIVE_CONTAINER_CHANGED, this.containerChanged)
+    } else {
+      this.listenTo(this.core.mediaControl, Events.MEDIACONTROL_CONTAINERCHANGED, this.containerChanged)
+    }
+
+    if (this.__container) {
       // Set resolved source as eventLabel if not defined in plugin configuration
       if (!this._label) {
-        this._label = this._container.options.src
+        this._label = this.__container.options.src
       }
-      this.listenTo(this._container, Events.CONTAINER_TIMEUPDATE, this.onTimeUpdate)
-      this.listenTo(this._container, Events.CONTAINER_PLAY, this.onPlay)
-      this.listenTo(this._container, Events.CONTAINER_SEEK, (event) => this.onSeek(event))
-      this.listenTo(this._container, Events.CONTAINER_PAUSE, this.onPause)
-      this.listenTo(this._container, Events.CONTAINER_STOP, this.onStop)
-      this.listenTo(this._container, Events.CONTAINER_ENDED, this.onEnded)
-      this._hasEvent('ready') && this.listenTo(this._container, Events.CONTAINER_READY, this.onReady)
-      this._hasEvent('buffering') && this.listenTo(this._container, Events.CONTAINER_STATE_BUFFERING, this.onBuffering)
-      this._hasEvent('bufferfull') && this.listenTo(this._container, Events.CONTAINER_STATE_BUFFERFULL, this.onBufferFull)
-      this._hasEvent('loadedmetadata') && this.listenTo(this._container, Events.CONTAINER_LOADEDMETADATA, this.onLoadedMetadata)
-      this._hasEvent('volume') && this.listenTo(this._container, Events.CONTAINER_VOLUME, (event) => this.onVolumeChanged(event))
-      this._hasEvent('fullscreen') && this.listenTo(this._container, Events.CONTAINER_FULL_SCREEN, this.onFullscreen)
-      this._hasEvent('playbackstate') && this.listenTo(this._container, Events.CONTAINER_PLAYBACKSTATE, this.onPlaybackChanged)
-      this._hasEvent('highdefinitionupdate') && this.listenTo(this._container, Events.CONTAINER_HIGHDEFINITIONUPDATE, this.onHD)
-      this._hasEvent('playbackdvrstatechanged') && this.listenTo(this._container, Events.CONTAINER_PLAYBACKDVRSTATECHANGED, this.onDVR)
-      this._hasEvent('error') && this.listenTo(this._container, Events.CONTAINER_ERROR, this.onError)
+      this.listenTo(this.__container, Events.CONTAINER_TIMEUPDATE, this.onTimeUpdate)
+      this.listenTo(this.__container, Events.CONTAINER_PLAY, this.onPlay)
+      this.listenTo(this.__container, Events.CONTAINER_SEEK, (event) => this.onSeek(event))
+      this.listenTo(this.__container, Events.CONTAINER_PAUSE, this.onPause)
+      this.listenTo(this.__container, Events.CONTAINER_STOP, this.onStop)
+      this.listenTo(this.__container, Events.CONTAINER_ENDED, this.onEnded)
+      this._hasEvent('ready') && this.listenTo(this.__container, Events.CONTAINER_READY, this.onReady)
+      this._hasEvent('buffering') && this.listenTo(this.__container, Events.CONTAINER_STATE_BUFFERING, this.onBuffering)
+      this._hasEvent('bufferfull') && this.listenTo(this.__container, Events.CONTAINER_STATE_BUFFERFULL, this.onBufferFull)
+      this._hasEvent('loadedmetadata') && this.listenTo(this.__container, Events.CONTAINER_LOADEDMETADATA, this.onLoadedMetadata)
+      this._hasEvent('volume') && this.listenTo(this.__container, Events.CONTAINER_VOLUME, (event) => this.onVolumeChanged(event))
+      this._hasEvent('fullscreen') && this.listenTo(this.__container, Events.CONTAINER_FULL_SCREEN, this.onFullscreen)
+      this._hasEvent('playbackstate') && this.listenTo(this.__container, Events.CONTAINER_PLAYBACKSTATE, this.onPlaybackChanged)
+      this._hasEvent('highdefinitionupdate') && this.listenTo(this.__container, Events.CONTAINER_HIGHDEFINITIONUPDATE, this.onHD)
+      this._hasEvent('playbackdvrstatechanged') && this.listenTo(this.__container, Events.CONTAINER_PLAYBACKDVRSTATECHANGED, this.onDVR)
+      this._hasEvent('error') && this.listenTo(this.__container, Events.CONTAINER_ERROR, this.onError)
     }
   }
 
@@ -111,6 +122,8 @@ export default class GaEventsPlugin extends CorePlugin {
     this._gaSecondsAct = $.isFunction(cfg.progressSecondsAction) && cfg.progressSecondsAction || function(i) { return 'progress_' + i + 's' }
     this._gaSecondsTimerStarted = false
     this._processGaSeconds = this._gaSeconds.length > 0
+
+    // TODO: handle loopLastProgressSeconds option (default to false)
   }
 
   get _defaultEventMap() {
@@ -161,15 +174,15 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   get duration() {
-    return this.isLive ? 0 : this._container && this._container.getDuration()
+    return this.isLive ? 0 : this.__container && this.__container.getDuration()
   }
 
   get isLive() {
-    return this._container.getPlaybackType() === Playback.LIVE
+    return this.__container.getPlaybackType() === Playback.LIVE
   }
 
   get isPlaying() {
-    return this._container.isPlaying()
+    return this.__container.isPlaying()
   }
 
   trunc(v) {
