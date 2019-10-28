@@ -117,13 +117,17 @@ export default class GaEventsPlugin extends CorePlugin {
     this._gaPercentCat = cfg.progressPercentCategory || this._category
     this._gaPercentAct = $.isFunction(cfg.progressPercentAction) && cfg.progressPercentAction || function(i) { return 'progress_' + i + 'p' }
     this._processGaPercent = this._gaPercent.length > 0
+
     this._gaSeconds = $.isArray(cfg.progressSeconds) && cfg.progressSeconds || []
     this._gaSecondsCat = cfg.progressSecondsCategory || this._category
     this._gaSecondsAct = $.isFunction(cfg.progressSecondsAction) && cfg.progressSecondsAction || function(i) { return 'progress_' + i + 's' }
-    this._gaSecondsTimerStarted = false
+    this._progressTimerStarted = false
     this._processGaSeconds = this._gaSeconds.length > 0
 
-    // TODO: handle loopLastProgressSeconds option (default to false)
+    this._processGaEachSeconds = Number.isInteger(cfg.progressEachSeconds) && cfg.progressEachSeconds > 0
+    this._gaEachSeconds = this._processGaEachSeconds && cfg.progressEachSeconds || false
+    this._gaEachSecondsCat = cfg.progressEachSecondsCategory || this._category
+    this._gaEachSecondsAct = $.isFunction(cfg.progressEachSecondsAction) && cfg.progressEachSecondsAction || function(i) { return 'progress_' + i + 's' }
   }
 
   get _defaultEventMap() {
@@ -194,8 +198,9 @@ export default class GaEventsPlugin extends CorePlugin {
 
     if (this.isLive || !this.isPlaying) return
 
-    // Check for "seconds" progress event
+    // Check for "seconds" progress events
     this._processGaSeconds && this.processGaSeconds(this._position)
+    this._processGaEachSeconds && this.processGaEachSeconds(this._position)
 
     // Check for "percent" progress event
     this._processGaPercent && this.processGaPercent(this._position)
@@ -205,6 +210,13 @@ export default class GaEventsPlugin extends CorePlugin {
     if (this._gaSecondsPrev !== pos && this._gaSeconds.indexOf(pos) !== -1) {
       this._gaSecondsPrev = pos
       this.gaEvent(this._gaSecondsCat, this._gaSecondsAct(pos), this._label)
+    }
+  }
+
+  processGaEachSeconds(pos) {
+    if (pos > 0 && this._gaEachSecondsPrev !== pos && pos % this._gaEachSeconds === 0) {
+      this._gaEachSecondsPrev = pos
+      this.gaEvent(this._gaSecondsCat, this._gaEachSecondsAct(pos), this._label)
     }
   }
 
@@ -246,26 +258,35 @@ export default class GaEventsPlugin extends CorePlugin {
     }
     this.gaEvent(this._category, this._action('play'), this._label, this._value(this.position))
 
-    // Start "seconds" progress event timer (if LIVE playback type)
-    this.isLive && this._processGaSeconds && this._startGaSecondsTimer()
+    this._withProgressTimer && this._startProgressTimer()
   }
 
-  _startGaSecondsTimer() {
-    if (this._gaSecondsTimerStarted) return
+  get _withProgressTimer() {
+    // LIVE playback type and at least one of the two options enabled
+    return this.isLive && (this._processGaSeconds || this._processGaEachSeconds)
+  }
 
-    this._gaSecondsTimerStarted = true
-    this._gaSecondsElapsed = 0
-    this.processGaSeconds(this._gaSecondsElapsed)
-    this._gaSecondsTimerId = setInterval(() => {
-      this._gaSecondsElapsed++
-      this.processGaSeconds(this._gaSecondsElapsed)
+  _startProgressTimer() {
+    if (this._progressTimerStarted) return
+
+    this._progressTimerStarted = true
+    this._progressTimerElapsed = 0
+
+    this._processGaSeconds && this.processGaSeconds(this._progressTimerElapsed)
+    this._processGaEachSeconds && this.processGaEachSeconds(this._progressTimerElapsed)
+
+    this._progressTimerId = setInterval(() => {
+      this._progressTimerElapsed++
+      this._processGaSeconds && this.processGaSeconds(this._progressTimerElapsed)
+      this._processGaEachSeconds && this.processGaEachSeconds(this._progressTimerElapsed)
     }, 1000)
   }
 
-  _stopGaSecondsTimer() {
-    clearInterval(this._gaSecondsTimerId)
+  _stopProgressTimer() {
+    clearInterval(this._progressTimerId)
     this._gaSecondsPrev = -1
-    this._gaSecondsTimerStarted = false
+    this._gaEachSecondsPrev = -1
+    this._progressTimerStarted = false
   }
 
   onSeek(pos) {
@@ -277,24 +298,21 @@ export default class GaEventsPlugin extends CorePlugin {
       this._gaPercentPrev = this.trunc((this.trunc(pos) * 100) / this.duration) - 1
     }
 
-    // Stop "seconds" progress event timer (if LIVE playback type)
-    this.isLive && this._processGaSeconds && this._stopGaSecondsTimer()
+    this._withProgressTimer && this._stopProgressTimer()
   }
 
   onPause() {
     this._hasEvent('pause') && this.gaEvent(this._category, this._action('pause'), this._label, this._value(this.position))
     if (this._gaPlayOnce) this._doSendPlay = true
 
-    // Stop "seconds" progress event timer (if LIVE playback type)
-    this.isLive && this._processGaSeconds && this._stopGaSecondsTimer()
+    this._withProgressTimer && this._stopProgressTimer()
   }
 
   onStop() {
     this._hasEvent('stop') && this.gaEvent(this._category, this._action('stop'), this._label, this._value(this.position))
     if (this._gaPlayOnce) this._doSendPlay = true
 
-    // Stop "seconds" progress event timer (if LIVE playback type)
-    this.isLive && this._processGaSeconds && this._stopGaSecondsTimer()
+    this._withProgressTimer && this._stopProgressTimer()
   }
 
   onEnded() {
@@ -303,6 +321,7 @@ export default class GaEventsPlugin extends CorePlugin {
 
     // Check for video ended progress events
     this._processGaSeconds && this.processGaSeconds(this.duration)
+    this._processGaEachSeconds && this.processGaEachSeconds(this.duration)
     this._processGaPercent && this.processGaPercent(this.duration)
   }
 
