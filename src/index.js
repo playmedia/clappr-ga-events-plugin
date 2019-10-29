@@ -104,8 +104,8 @@ export default class GaEventsPlugin extends CorePlugin {
     this._category = cfg.eventCategory || 'Video'
     this._label = cfg.eventLabel // Otherwise filled in bindEvents()
     this._setValue = cfg.eventValueAuto === true
-    this._events = $.isArray(cfg.eventToTrack) && cfg.eventToTrack || this._defaultEvents // FIXME: merge with default ?
-    this._eventMap = $.isPlainObject(cfg.eventMapping) && cfg.eventMapping || this._defaultEventMap // FIXME: merge with default ?
+    this._events = $.isArray(cfg.eventToTrack) && cfg.eventToTrack || this._defaultEvents
+    this._eventMap = $.isPlainObject(cfg.eventMapping) && {...this._defaultEventMap, ...cfg.eventMapping} || this._defaultEventMap
     this._gaPlayOnce = cfg.sendPlayOnce === true
     this._gaEx = cfg.sendExceptions === true
     this._gaExDesc = cfg.sendExceptionsMsg === true
