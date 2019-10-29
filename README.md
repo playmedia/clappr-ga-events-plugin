@@ -96,7 +96,7 @@ If this option is enabled, the eventValue is set to :
 
 __Note:__ The event value is truncated using [parseInt()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt) function to convert to integer. If container playback type is LIVE, the player position value always equals zero.
 
-## eventToTrack
+## eventToTrack
 
 `eventToTrack` __optional__ property is the player container event list to listen and to send to Google Analytics using [eventAction](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#eventAction) tracking field. The default value is `['play', 'seek', 'pause', 'stop', 'ended', 'volume']`.
 
