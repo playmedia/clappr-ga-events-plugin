@@ -113,9 +113,9 @@ Keep in mind that "Web Property / Property / Tracking ID" limit is 10 million hi
   /* [...] */
 ```
 
-## eventMapping
+## eventMapping
 
-`eventMapping` __optional__ property is a plain Object used to set the [eventAction](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#eventAction) value for each container event. Default values are event name list listed above. The value can also be a function _(argument value depends on event)_.
+`eventMapping` __optional__ property is a plain Object used to set the [eventAction](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#eventAction) value for each container event. Default values are event name list listed above. The value can also be a function _(argument value depends on event)_. Object can be partially filled _(merged with default values)_.
 
 ```javascript
   /* [...] */
