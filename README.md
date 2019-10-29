@@ -113,9 +113,9 @@ Keep in mind that "Web Property / Property / Tracking ID" limit is 10 million hi
   /* [...] */
 ```
 
-## eventMapping
+## eventMapping
 
-`eventMapping` __optional__ property is a plain Object used to set the [eventAction](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#eventAction) value for each container event. Default values are event name list listed above.
+`eventMapping` __optional__ property is a plain Object used to set the [eventAction](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#eventAction) value for each container event. Default values are event name list listed above. The value can also be a function _(argument value depends on event)_. Object can be partially filled _(merged with default values)_.
 
 ```javascript
   /* [...] */
@@ -128,7 +128,7 @@ Keep in mind that "Web Property / Property / Tracking ID" limit is 10 million hi
       loadedmetadata: 'MyLoadedmetadataEventLabel', // default is 'loadedmetadata'
       play: 'MyPlayEventLabel', // default is 'play'
       seek: 'MySeekEventLabel', // default is 'seek'
-      pause: 'MyPauseEventLabel', // default is 'pause'
+      pause: function(p) { return 'pause_at_'+p+'_seconds'; }, // default is 'pause'
       stop: 'MyStopEventLabel', // default is 'stop'
       ended: 'MyEndedEventLabel', // default is 'ended'
       volume: 'MyVolumeEventLabel', // default is 'volume'
@@ -234,6 +234,31 @@ __Note:__ If user seek video past a progress event time range, then the "leaped"
   /* [...] */
 ```
 
+## progressEachSeconds, progressEachSecondsCategory & progressEachSecondsAction
+
+These __optional__ properties are again exactly the same, but instead send progress event each __N__ seconds.
+
+`progressEachSeconds` must be a positive integer, is the delay in seconds between two events.
+
+`progressEachSecondsCategory` default value is `undefined`, which default to `eventCategory` plugin option value.
+
+`progressEachSecondsAction` default value is `function(i) { return 'progress_' + i + 's' }`, where `i` argument is the video progress duration value.
+
+If playback type is __LIVE__, then events are send according time elapsed since __play__ event. If video __pause__, __seek__ or __stop__, then events are send again each Nth seconds. _(It use a Timer instead of referring to player position)_
+
+__Note:__ If user seek video past a progress event time range, then the "leaped" event is not send. _(seek is available only if video has DVR feature enabled)_
+
+```javascript
+  /* [...] */
+  gaEventsPlugin: {
+    trackingId: 'UA-XXXX-Y',
+    progressEachSeconds: 10,
+    progressEachSecondsCategory: 'Video progress', // default is 'Video'
+    progressEachSecondsAction: function(i) { return i + ' seconds' },
+  }
+  /* [...] */
+```
+
 # External Interface
 
 If tracker name is provided using the `createFieldsObject` plugin option, then `gaEventsTracker()` method is added to Clappr player instance. This method return the Google Analytics [tracker instance](https://developers.google.com/analytics/devguides/collection/analyticsjs/tracker-object-reference) associated to player.
@@ -260,23 +285,11 @@ var tracker = player.gaEventsTracker();
 Install dependencies :
 
 ```shell
-  npm install
+  yarn
 ```
 
-Compile :
+Start HTTP dev server (http://0.0.0.0:8080) :
 
 ```shell
-  npm run dist
-```
-
-Watch mode :
-
-```shell
-  npm run watch
-```
-
-Start HTTP server (http://0.0.0.0:8080/demo/) :
-
-```shell
-  npm run demo
+  npm start
 ```

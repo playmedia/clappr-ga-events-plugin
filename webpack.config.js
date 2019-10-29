@@ -1,23 +1,56 @@
-var path = require('path');
-var webpack = require('webpack');
-var Clean = require('clean-webpack-plugin');
+// Webpack 4 configuration
+const path = require('path')
+const webpack = require('webpack')
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin")
+const NotifierPlugin = require('webpack-build-notifier')
 
-var plugins = []
-var babelCompact = false
+var name = 'clappr-ga-events-plugin'
+var outputFile, plugins = [], optimization = {}
 
-if (process.env.npm_lifecycle_event === 'dist-min') {
-  // *** Uncomment the following lines to suppress UglifyJS warnings ***
-  // plugins.push(new webpack.optimize.UglifyJsPlugin({
-  //   compress: {warnings: false},
-  //   output: {comments: false}
-  // }))
-  babelCompact = true
+if (process.env.npm_lifecycle_event === 'dist') {
+  outputFile = name + '.min.js'
+  optimization.minimizer = [
+    new UglifyJsPlugin({
+      cache: true,
+      parallel: true,
+      uglifyOptions: {
+        output: {
+          comments: false,
+        },
+      }
+    }),
+  ]
 } else {
-  plugins.push(new Clean(['dist'], {verbose: false}))
+  outputFile = name + '.js'
+  optimization.minimize = false
 }
+
+plugins.push(new NotifierPlugin({
+  title: optimization.minimizer ? 'minified ' + name : name,
+}))
 
 module.exports = {
   entry: path.resolve(__dirname, 'src/index.js'),
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: outputFile,
+    library: 'ClapprGaEventsPlugin',
+    libraryTarget: 'umd',
+  },
+  optimization: optimization,
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        use: {
+          loader: 'babel-loader'
+        },
+        include: [
+          path.resolve(__dirname, 'src')
+        ],
+      },
+    ],
+  },
   plugins: plugins,
   externals: {
    clappr: {
@@ -27,25 +60,14 @@ module.exports = {
     root: 'Clappr'
    }
   },
-  module: {
-    loaders: [
-      {
-        test: /\.js$/,
-        loader: 'babel',
-        exclude: /node_modules/,
-        query: {
-            compact: babelCompact,
-        }
-      },
+  devServer: {
+    contentBase: [
+      path.resolve(__dirname, "public"),
     ],
-  },
-  resolve: {
-    extensions: ['', '.js'],
-  },
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'clappr-ga-events-plugin.js',
-    library: 'ClapprGaEventsPlugin',
-    libraryTarget: 'umd',
-  },
-};
+    // publicPath: '/js/',
+    disableHostCheck: true, // https://github.com/webpack/webpack-dev-server/issues/882
+    compress: true,
+    host: "0.0.0.0",
+    port: 8080
+  }
+}

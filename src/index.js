@@ -11,34 +11,45 @@ export default class GaEventsPlugin extends CorePlugin {
     this._volumeTimer = null
     this._doSendPlay = true
     this.readPluginConfig(this.options.gaEventsPlugin)
-    gaTrackingSnippet(this._gaCfg.name, this._gaCfg.debug, this._gaCfg.trace)
-    this._ga('create', this._trackingId, this._createFieldsObject)
+    gaTrackingSnippet(this._gaCfg.name, this._gaCfg.debug, this._gaCfg.trace, (r) => {
+      r && this._ga('create', this._trackingId, this._createFieldsObject)
+    })
+  }
+
+  get __container() {
+    return this.core.activeContainer
+      ? this.core.activeContainer
+      : this.core.mediaControl.container
   }
 
   bindEvents() {
-    this.listenTo(this.core.mediaControl, Events.MEDIACONTROL_CONTAINERCHANGED, this.containerChanged)
-    this._container = this.core.getCurrentContainer()
-    if (this._container) {
+    if (Events.CORE_ACTIVE_CONTAINER_CHANGED) {
+      this.listenTo(this.core, Events.CORE_ACTIVE_CONTAINER_CHANGED, this.containerChanged)
+    } else {
+      this.listenTo(this.core.mediaControl, Events.MEDIACONTROL_CONTAINERCHANGED, this.containerChanged)
+    }
+
+    if (this.__container) {
       // Set resolved source as eventLabel if not defined in plugin configuration
       if (!this._label) {
-        this._label = this._container.options.src
+        this._label = this.__container.options.src
       }
-      this.listenTo(this._container, Events.CONTAINER_TIMEUPDATE, this.onTimeUpdate)
-      this.listenTo(this._container, Events.CONTAINER_PLAY, this.onPlay)
-      this.listenTo(this._container, Events.CONTAINER_SEEK, (event) => this.onSeek(event))
-      this.listenTo(this._container, Events.CONTAINER_PAUSE, this.onPause)
-      this.listenTo(this._container, Events.CONTAINER_STOP, this.onStop)
-      this.listenTo(this._container, Events.CONTAINER_ENDED, this.onEnded)
-      this._hasEvent('ready') && this.listenTo(this._container, Events.CONTAINER_READY, this.onReady)
-      this._hasEvent('buffering') && this.listenTo(this._container, Events.CONTAINER_STATE_BUFFERING, this.onBuffering)
-      this._hasEvent('bufferfull') && this.listenTo(this._container, Events.CONTAINER_STATE_BUFFERFULL, this.onBufferFull)
-      this._hasEvent('loadedmetadata') && this.listenTo(this._container, Events.CONTAINER_LOADEDMETADATA, this.onLoadedMetadata)
-      this._hasEvent('volume') && this.listenTo(this._container, Events.CONTAINER_VOLUME, (event) => this.onVolumeChanged(event))
-      this._hasEvent('fullscreen') && this.listenTo(this._container, Events.CONTAINER_FULL_SCREEN, this.onFullscreen)
-      this._hasEvent('playbackstate') && this.listenTo(this._container, Events.CONTAINER_PLAYBACKSTATE, this.onPlaybackChanged)
-      this._hasEvent('highdefinitionupdate') && this.listenTo(this._container, Events.CONTAINER_HIGHDEFINITIONUPDATE, this.onHD)
-      this._hasEvent('playbackdvrstatechanged') && this.listenTo(this._container, Events.CONTAINER_PLAYBACKDVRSTATECHANGED, this.onDVR)
-      this._hasEvent('error') && this.listenTo(this._container, Events.CONTAINER_ERROR, this.onError)
+      this.listenTo(this.__container, Events.CONTAINER_TIMEUPDATE, this.onTimeUpdate)
+      this.listenTo(this.__container, Events.CONTAINER_PLAY, this.onPlay)
+      this.listenTo(this.__container, Events.CONTAINER_SEEK, (event) => this.onSeek(event))
+      this.listenTo(this.__container, Events.CONTAINER_PAUSE, this.onPause)
+      this.listenTo(this.__container, Events.CONTAINER_STOP, this.onStop)
+      this.listenTo(this.__container, Events.CONTAINER_ENDED, this.onEnded)
+      this._hasEvent('ready') && this.listenTo(this.__container, Events.CONTAINER_READY, this.onReady)
+      this._hasEvent('buffering') && this.listenTo(this.__container, Events.CONTAINER_STATE_BUFFERING, this.onBuffering)
+      this._hasEvent('bufferfull') && this.listenTo(this.__container, Events.CONTAINER_STATE_BUFFERFULL, this.onBufferFull)
+      this._hasEvent('loadedmetadata') && this.listenTo(this.__container, Events.CONTAINER_LOADEDMETADATA, this.onLoadedMetadata)
+      this._hasEvent('volume') && this.listenTo(this.__container, Events.CONTAINER_VOLUME, (event) => this.onVolumeChanged(event))
+      this._hasEvent('fullscreen') && this.listenTo(this.__container, Events.CONTAINER_FULLSCREEN, this.onFullscreen)
+      this._hasEvent('playbackstate') && this.listenTo(this.__container, Events.CONTAINER_PLAYBACKSTATE, this.onPlaybackChanged)
+      this._hasEvent('highdefinitionupdate') && this.listenTo(this.__container, Events.CONTAINER_HIGHDEFINITIONUPDATE, this.onHD)
+      this._hasEvent('playbackdvrstatechanged') && this.listenTo(this.__container, Events.CONTAINER_PLAYBACKDVRSTATECHANGED, this.onDVR)
+      this._hasEvent('error') && this.listenTo(this.__container, Events.CONTAINER_ERROR, this.onError)
     }
   }
 
@@ -94,7 +105,7 @@ export default class GaEventsPlugin extends CorePlugin {
     this._label = cfg.eventLabel // Otherwise filled in bindEvents()
     this._setValue = cfg.eventValueAuto === true
     this._events = $.isArray(cfg.eventToTrack) && cfg.eventToTrack || this._defaultEvents
-    this._eventMap = $.isPlainObject(cfg.eventMapping) && cfg.eventMapping || this._defaultEventMap
+    this._eventMap = $.isPlainObject(cfg.eventMapping) && {...this._defaultEventMap, ...cfg.eventMapping} || this._defaultEventMap
     this._gaPlayOnce = cfg.sendPlayOnce === true
     this._gaEx = cfg.sendExceptions === true
     this._gaExDesc = cfg.sendExceptionsMsg === true
@@ -106,11 +117,17 @@ export default class GaEventsPlugin extends CorePlugin {
     this._gaPercentCat = cfg.progressPercentCategory || this._category
     this._gaPercentAct = $.isFunction(cfg.progressPercentAction) && cfg.progressPercentAction || function(i) { return 'progress_' + i + 'p' }
     this._processGaPercent = this._gaPercent.length > 0
+
     this._gaSeconds = $.isArray(cfg.progressSeconds) && cfg.progressSeconds || []
     this._gaSecondsCat = cfg.progressSecondsCategory || this._category
     this._gaSecondsAct = $.isFunction(cfg.progressSecondsAction) && cfg.progressSecondsAction || function(i) { return 'progress_' + i + 's' }
-    this._gaSecondsTimerStarted = false
+    this._progressTimerStarted = false
     this._processGaSeconds = this._gaSeconds.length > 0
+
+    this._processGaEachSeconds = Number.isInteger(cfg.progressEachSeconds) && cfg.progressEachSeconds > 0
+    this._gaEachSeconds = this._processGaEachSeconds && cfg.progressEachSeconds || false
+    this._gaEachSecondsCat = cfg.progressEachSecondsCategory || this._category
+    this._gaEachSecondsAct = $.isFunction(cfg.progressEachSecondsAction) && cfg.progressEachSecondsAction || function(i) { return 'progress_' + i + 's' }
   }
 
   get _defaultEventMap() {
@@ -148,8 +165,10 @@ export default class GaEventsPlugin extends CorePlugin {
     return this._events.indexOf(e) !== -1
   }
 
-  _action(e) {
-    return this._eventMap[e]
+  _action(e, v) {
+    return $.isFunction(this._eventMap[e])
+      ? this._eventMap[e](v)
+      : this._eventMap[e]
   }
 
   _value(v) {
@@ -161,15 +180,15 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   get duration() {
-    return this.isLive ? 0 : this._container && this._container.getDuration()
+    return this.isLive ? 0 : this.__container && this.__container.getDuration()
   }
 
   get isLive() {
-    return this._container.getPlaybackType() === Playback.LIVE
+    return this.__container.getPlaybackType() === Playback.LIVE
   }
 
   get isPlaying() {
-    return this._container.isPlaying()
+    return this.__container.isPlaying()
   }
 
   trunc(v) {
@@ -181,8 +200,9 @@ export default class GaEventsPlugin extends CorePlugin {
 
     if (this.isLive || !this.isPlaying) return
 
-    // Check for "seconds" progress event
+    // Check for "seconds" progress events
     this._processGaSeconds && this.processGaSeconds(this._position)
+    this._processGaEachSeconds && this.processGaEachSeconds(this._position)
 
     // Check for "percent" progress event
     this._processGaPercent && this.processGaPercent(this._position)
@@ -192,6 +212,13 @@ export default class GaEventsPlugin extends CorePlugin {
     if (this._gaSecondsPrev !== pos && this._gaSeconds.indexOf(pos) !== -1) {
       this._gaSecondsPrev = pos
       this.gaEvent(this._gaSecondsCat, this._gaSecondsAct(pos), this._label)
+    }
+  }
+
+  processGaEachSeconds(pos) {
+    if (pos > 0 && this._gaEachSecondsPrev !== pos && pos % this._gaEachSeconds === 0) {
+      this._gaEachSecondsPrev = pos
+      this.gaEvent(this._gaSecondsCat, this._gaEachSecondsAct(pos), this._label)
     }
   }
 
@@ -223,7 +250,7 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   onLoadedMetadata(metadata) {
-    this.gaEvent(this._category, this._action('loadedmetadata'), this._label)
+    this.gaEvent(this._category, this._action('loadedmetadata', metadata), this._label)
   }
 
   onPlay() {
@@ -231,32 +258,42 @@ export default class GaEventsPlugin extends CorePlugin {
       if (!this._doSendPlay) return
       this._doSendPlay = false
     }
-    this.gaEvent(this._category, this._action('play'), this._label, this._value(this.position))
 
-    // Start "seconds" progress event timer (if LIVE playback type)
-    this.isLive && this._processGaSeconds && this._startGaSecondsTimer()
+    this.gaEvent(this._category, this._action('play', this.position), this._label, this._value(this.position))
+
+    this._withProgressTimer && this._startProgressTimer()
   }
 
-  _startGaSecondsTimer() {
-    if (this._gaSecondsTimerStarted) return
+  get _withProgressTimer() {
+    // LIVE playback type and at least one of the two options enabled
+    return this.isLive && (this._processGaSeconds || this._processGaEachSeconds)
+  }
 
-    this._gaSecondsTimerStarted = true
-    this._gaSecondsElapsed = 0
-    this.processGaSeconds(this._gaSecondsElapsed)
-    this._gaSecondsTimerId = setInterval(() => {
-      this._gaSecondsElapsed++
-      this.processGaSeconds(this._gaSecondsElapsed)
+  _startProgressTimer() {
+    if (this._progressTimerStarted) return
+
+    this._progressTimerStarted = true
+    this._progressTimerElapsed = 0
+
+    this._processGaSeconds && this.processGaSeconds(this._progressTimerElapsed)
+    this._processGaEachSeconds && this.processGaEachSeconds(this._progressTimerElapsed)
+
+    this._progressTimerId = setInterval(() => {
+      this._progressTimerElapsed++
+      this._processGaSeconds && this.processGaSeconds(this._progressTimerElapsed)
+      this._processGaEachSeconds && this.processGaEachSeconds(this._progressTimerElapsed)
     }, 1000)
   }
 
-  _stopGaSecondsTimer() {
-    clearInterval(this._gaSecondsTimerId)
+  _stopProgressTimer() {
+    clearInterval(this._progressTimerId)
     this._gaSecondsPrev = -1
-    this._gaSecondsTimerStarted = false
+    this._gaEachSecondsPrev = -1
+    this._progressTimerStarted = false
   }
 
   onSeek(pos) {
-    this._hasEvent('seek') && this.gaEvent(this._category, this._action('seek'), this._label, this._value(this.trunc(pos)))
+    this._hasEvent('seek') && this.gaEvent(this._category, this._action('seek', this.trunc(pos)), this._label, this._value(this.trunc(pos)))
     if (this._gaPlayOnce) this._doSendPlay = true
 
     // Adjust previous "percent" event value
@@ -264,32 +301,30 @@ export default class GaEventsPlugin extends CorePlugin {
       this._gaPercentPrev = this.trunc((this.trunc(pos) * 100) / this.duration) - 1
     }
 
-    // Stop "seconds" progress event timer (if LIVE playback type)
-    this.isLive && this._processGaSeconds && this._stopGaSecondsTimer()
+    this._withProgressTimer && this._stopProgressTimer()
   }
 
   onPause() {
-    this._hasEvent('pause') && this.gaEvent(this._category, this._action('pause'), this._label, this._value(this.position))
+    this._hasEvent('pause') && this.gaEvent(this._category, this._action('pause', this.position), this._label, this._value(this.position))
     if (this._gaPlayOnce) this._doSendPlay = true
 
-    // Stop "seconds" progress event timer (if LIVE playback type)
-    this.isLive && this._processGaSeconds && this._stopGaSecondsTimer()
+    this._withProgressTimer && this._stopProgressTimer()
   }
 
   onStop() {
-    this._hasEvent('stop') && this.gaEvent(this._category, this._action('stop'), this._label, this._value(this.position))
+    this._hasEvent('stop') && this.gaEvent(this._category, this._action('stop', this.position), this._label, this._value(this.position))
     if (this._gaPlayOnce) this._doSendPlay = true
 
-    // Stop "seconds" progress event timer (if LIVE playback type)
-    this.isLive && this._processGaSeconds && this._stopGaSecondsTimer()
+    this._withProgressTimer && this._stopProgressTimer()
   }
 
   onEnded() {
-    this._hasEvent('ended') && this.gaEvent(this._category, this._action('ended'), this._label, this._value(this.position))
+    this._hasEvent('ended') && this.gaEvent(this._category, this._action('ended', this.position), this._label, this._value(this.position))
     if (this._gaPlayOnce) this._doSendPlay = true
 
     // Check for video ended progress events
     this._processGaSeconds && this.processGaSeconds(this.duration)
+    this._processGaEachSeconds && this.processGaEachSeconds(this.duration)
     this._processGaPercent && this.processGaPercent(this.duration)
   }
 
@@ -297,11 +332,12 @@ export default class GaEventsPlugin extends CorePlugin {
     // Rate limit to avoid HTTP hammering
     clearTimeout(this._volumeTimer)
     this._volumeTimer = setTimeout(() => {
-      this.gaEvent(this._category, this._action('volume'), this._label, this._value(this.trunc(e)))
+      this.gaEvent(this._category, this._action('volume', this.trunc(e)), this._label, this._value(this.trunc(e)))
     }, 400)
   }
 
   onFullscreen() {
+    // TODO: create Clappr PR to add boolean argument to CONTAINER_FULLSCREEN event
     this.gaEvent(this._category, this._action('fullscreen'), this._label)
   }
 

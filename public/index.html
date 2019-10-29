@@ -1,0 +1,70 @@
+<head>
+  <!-- <script type="text/javascript" src="https://www.google-analytics.com/analytics.js"></script> -->
+  <!-- <script type="text/javascript" src="https://www.google-analytics.com/analytics_debug.js"></script> -->
+  <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr@0.2.100/dist/clappr.min.js"></script> -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+  <script type="text/javascript" src="clappr-ga-events-plugin.js"></script>
+    <style>
+      .player {
+        width: 640px;
+        height: 360px;
+        overflow: hidden;
+      }
+    </style>
+</head>
+<body>
+  <div class="player"></div>
+  <script>
+    (function () {
+      console.log('Clappr version ' + Clappr.version);
+      // Clappr.Log.setLevel(0)
+
+      // Sintel trailer - (c) copyright Blender Foundation - www.sintel.org
+      var SINTEL = 'https://static.playmedia-cdn.net/resources/sample/h264_sintel_trailer-1080p.mp4';
+      // var SINTEL = 'https://static.playmedia-cdn.net/resources/sample/h264_sintel_trailer-1080p/playlist.m3u8';
+
+      // Big Buck Bunny - (c) copyright 2008, Blender Foundation - www.bigbuckbunny.org
+      var BUNNY = 'https://static.playmedia-cdn.net/resources/sample/h264_big_buck_bunny_trailer-1080p.mp4';
+      // var BUNNY = 'https://static.playmedia-cdn.net/resources/sample/h264_big_buck_bunny_trailer-1080p/playlist.m3u8';
+      // var BUNNY = 'https://bitdash-a.akamaihd.net/content/MI201109210084_1/m3u8s/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.m3u8';
+
+      var player = new Clappr.Player({
+        parentId: ".player",
+        source: BUNNY,
+        disableKeyboardShortcuts: true,
+        disableVideoTagContextMenu: true,
+        autoSeekFromUrl: false,
+        // autoPlay: true,
+        plugins: {
+          core: [ClapprGaEventsPlugin],
+        },
+        gaEventsPlugin: {
+          gaCfg: {name: 'ga', debug: true, trace: false},
+          trackingId: 'UA-XXXX-Y', // Replace with tracking ID / web property ID
+          // createFieldsObject: {
+          //   name: 'MyTrackerName',
+          // },
+          // eventCategory: 'MyCategory',
+          eventLabel: 'Trailer',
+          // eventValueAuto: true,
+          // eventToTrack: ['play', 'seek', 'pause', 'stop', 'ended', 'volume', 'buffering', 'bufferfull', 'fullscreen'],
+          // eventMapping: {
+          //   pause: function(p) { return 'pause_at_'+p+'_seconds'; },
+          //   stop: function(p) { return 'stop_at_'+p+'_seconds'; },
+          // },
+          // sendPlayOnce: true,
+          // sendExceptions: true,
+          // sendExceptionsMsg: true,
+          // progressSeconds: [10, 20, 30, 40, 50, 60],
+          // progressPercent: [25, 50, 75, 100],
+          // progressEachSeconds: 10,
+        },
+      })
+
+      // window.getTracker = function() {
+      //   console.log('tracker', player.gaEventsTracker && player.gaEventsTracker())
+      // }
+    })()
+  </script>
+  <!-- <button onclick="getTracker()">get tracker</button> -->
+</body>
