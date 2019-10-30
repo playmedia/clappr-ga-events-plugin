@@ -23,6 +23,7 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   bindEvents() {
+    this.listenTo(this.core, Events.CORE_READY, this.onCoreReady)
     if (Events.CORE_ACTIVE_CONTAINER_CHANGED) {
       this.listenTo(this.core, Events.CORE_ACTIVE_CONTAINER_CHANGED, this.containerChanged)
     } else {
@@ -62,6 +63,11 @@ export default class GaEventsPlugin extends CorePlugin {
       }
 
       return {}
+  }
+
+  onCoreReady() {
+    // Since Clappr 0.2.84, "CORE_READY" event is trigerred after container changed
+    this.options.gaEventsPlugin && this.readPluginConfig(this.options.gaEventsPlugin)
   }
 
   containerChanged() {
