@@ -8,8 +8,8 @@ Add both Clappr and the plugin scripts to your HTML:
 
 ```html
 <head>
-  <script type="text/javascript" src="http://cdn.clappr.io/latest/clappr.min.js"></script>
-  <script type="text/javascript" src="dist/clappr-ga-events-plugin.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr-ga-events-plugin@latest/dist/clappr-ga-events-plugin.min.js"></script>
 </head>
 ```
 
