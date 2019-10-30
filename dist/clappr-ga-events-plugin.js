@@ -1650,6 +1650,8 @@ function (_CorePlugin) {
     value: function bindEvents() {
       var _this2 = this;
 
+      this.listenTo(this.core, _clappr.Events.CORE_READY, this.onCoreReady);
+
       if (_clappr.Events.CORE_ACTIVE_CONTAINER_CHANGED) {
         this.listenTo(this.core, _clappr.Events.CORE_ACTIVE_CONTAINER_CHANGED, this.containerChanged);
       } else {
@@ -1695,6 +1697,12 @@ function (_CorePlugin) {
       }
 
       return {};
+    }
+  }, {
+    key: "onCoreReady",
+    value: function onCoreReady() {
+      // Since Clappr 0.2.84, "CORE_READY" event is trigerred after container changed
+      this.options.gaEventsPlugin && this.readPluginConfig(this.options.gaEventsPlugin);
     }
   }, {
     key: "containerChanged",
