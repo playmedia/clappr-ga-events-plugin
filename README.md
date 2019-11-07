@@ -129,7 +129,7 @@ __Note:__ This option is ignored if playback type is __LIVE__. _(eventValueAuto 
 
 __Note:__ the list of available events is `['ready', 'buffering', 'bufferfull', 'loadedmetadata', 'play', 'seek', 'pause', 'stop', 'ended', 'volume', 'fullscreen', 'error', 'playbackstate', 'highdefinitionupdate', 'playbackdvrstatechanged']`. _This is not the complete Clappr container event list. If you think one or more event is needed, just open an issue or a pull request._
 
-Keep in mind that "Web Property / Property / Tracking ID" limit is 10 million hits per month per property. For more details, read [Google Analytics Collection Limits and Quotas](https://developers.google.com/analytics/devguides/collection/analyticsjs/limits-quotas).
+Keep in mind that Analytics limit is 200,000 hits per __user__ per day and 500 hits per __session__. For more details, read [Google Analytics Collection Limits and Quotas](https://developers.google.com/analytics/devguides/collection/analyticsjs/limits-quotas).
 
 ```javascript
   /* [...] */
