@@ -265,7 +265,7 @@ export default class GaEventsPlugin extends CorePlugin {
       this._doSendPlay = false
     }
 
-    this._hasEvent('player') && this.gaEvent(this._category, this._action('play', this.position), this._label, this._value(this.position))
+    this._hasEvent('play') && this.gaEvent(this._category, this._action('play', this.position), this._label, this._value(this.position))
 
     this._withProgressTimer && this._startProgressTimer()
   }
