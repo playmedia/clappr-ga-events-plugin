@@ -362,11 +362,13 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   onHD(isHD) {
-    this.gaEvent(this._category, this._action('highdefinitionupdate'), this._label)
+    let v = isHD ? 1 : 0
+    this.gaEvent(this._category, this._action('highdefinitionupdate'), this._label, this._value(v))
   }
 
   onDVR(dvrInUse) {
-    this.gaEvent(this._category, this._action('playbackdvrstatechanged'), this._label)
+    let v = dvrInUse ? 1 : 0
+    this.gaEvent(this._category, this._action('playbackdvrstatechanged'), this._label, this._value(v))
   }
 
   resolveErrMsg(o) {
