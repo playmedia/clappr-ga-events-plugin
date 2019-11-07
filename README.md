@@ -84,6 +84,7 @@ If this option is enabled, the eventValue is set to :
 * player position value in seconds for `play`, `pause`, `stop` and `ended` events
 * player "seek to" position value in seconds for `seek` event _(may be an unexpected value for LIVE playback with DVR)_
 * player volume percent value for `volume` event
+* 0 or 1 for `highdefinitionupdate` and `playbackdvrstatechanged` events
 
 If playback type is __LIVE__, the eventValue is set to elapsed duration since __play__ event in seconds. _(It use a Timer instead of referring to player position)_
 
