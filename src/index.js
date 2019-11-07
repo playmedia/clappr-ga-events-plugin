@@ -112,6 +112,7 @@ export default class GaEventsPlugin extends CorePlugin {
     this._category = cfg.eventCategory || 'Video'
     this._label = cfg.eventLabel // Otherwise filled in bindEvents()
     this._setValue = cfg.eventValueAuto === true
+    this._asLive = cfg.eventValueAsLive === true
     this._events = $.isArray(cfg.eventToTrack) && cfg.eventToTrack || this._defaultEvents
     this._eventMap = $.isPlainObject(cfg.eventMapping) && {...this._defaultEventMap, ...cfg.eventMapping} || this._defaultEventMap
     this._gaPlayOnce = cfg.sendPlayOnce === true
@@ -204,7 +205,7 @@ export default class GaEventsPlugin extends CorePlugin {
     this._isLive = this.__container.getPlaybackType() === Playback.LIVE
   }
 
-  onTimeUpdate(o){
+  onTimeUpdate(o) {
     this._position = o.current && this.trunc(o.current) || 0
 
     if (this._isLive || !this.isPlaying) return
@@ -267,14 +268,15 @@ export default class GaEventsPlugin extends CorePlugin {
       this._doSendPlay = false
     }
 
-    this._hasEvent('play') && this.gaEvent(this._category, this._action('play', this.position), this._label, this._value(this.position))
+    let pos = this._asLive ? 0 : this.position
+    this._hasEvent('play') && this.gaEvent(this._category, this._action('play', pos), this._label, this._value(pos))
 
     this._withProgressTimer && this._startProgressTimer()
   }
 
   get _withProgressTimer() {
-    // LIVE playback type and at least one option enabled
-    return this._isLive && (this._processGaSeconds || this._processGaEachSeconds || this._setValue)
+    // Assumed as LIVE playback type and at least one option enabled
+    return (this._isLive || this._asLive) && (this._processGaSeconds || this._processGaEachSeconds || this._setValue)
   }
 
   _startProgressTimer() {
@@ -283,13 +285,14 @@ export default class GaEventsPlugin extends CorePlugin {
     this._progressTimerStarted = true
     this._progressTimerElapsed = 0
 
-    this._processGaSeconds && this.processGaSeconds(this._progressTimerElapsed)
-    this._processGaEachSeconds && this.processGaEachSeconds(this._progressTimerElapsed)
+    // "on demand" is processed in onTimeUpdate()
+    this._isLive && this._processGaSeconds && this.processGaSeconds(this._progressTimerElapsed)
+    this._isLive && this._processGaEachSeconds && this.processGaEachSeconds(this._progressTimerElapsed)
 
     this._progressTimerId = setInterval(() => {
       this._progressTimerElapsed++
-      this._processGaSeconds && this.processGaSeconds(this._progressTimerElapsed)
-      this._processGaEachSeconds && this.processGaEachSeconds(this._progressTimerElapsed)
+      this._isLive && this._processGaSeconds && this.processGaSeconds(this._progressTimerElapsed)
+      this._isLive && this._processGaEachSeconds && this.processGaEachSeconds(this._progressTimerElapsed)
     }, 1000)
   }
 
@@ -300,8 +303,9 @@ export default class GaEventsPlugin extends CorePlugin {
     this._progressTimerStarted = false
   }
 
-  onSeek(seekPosition) {
-    let pos = this._isLive ? this._progressTimerElapsed : this.trunc(seekPosition)
+  onSeek(toPos) {
+    // FIXME: value may be unexpected for LIVE playback with DVR
+    let pos = this.trunc(toPos)
     this._hasEvent('seek') && this.gaEvent(this._category, this._action('seek', pos), this._label, this._value(pos))
     if (this._gaPlayOnce) this._doSendPlay = true
 
@@ -314,7 +318,7 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   onPause() {
-    let pos = this._isLive ? this._progressTimerElapsed : this.position
+    let pos = this._isLive || this._asLive ? this._progressTimerElapsed : this.position
     this._hasEvent('pause') && this.gaEvent(this._category, this._action('pause', pos), this._label, this._value(pos))
     if (this._gaPlayOnce) this._doSendPlay = true
 
@@ -322,7 +326,7 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   onStop() {
-    let pos = this._isLive ? this._progressTimerElapsed : this.position
+    let pos = this._isLive || this._asLive ? this._progressTimerElapsed : this.position
     this._hasEvent('stop') && this.gaEvent(this._category, this._action('stop', this.position), this._label, this._value(pos))
     if (this._gaPlayOnce) this._doSendPlay = true
 
@@ -349,7 +353,7 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   onFullscreen() {
-    // TODO: create Clappr PR to add boolean argument to CONTAINER_FULLSCREEN event
+    // TODO: create Clappr PR to add missing boolean argument to CONTAINER_FULLSCREEN event
     this.gaEvent(this._category, this._action('fullscreen'), this._label)
   }
 
