@@ -48,7 +48,7 @@ export default class GaEventsPlugin extends CorePlugin {
       this._hasEvent('bufferfull') && this.listenTo(this.__container, Events.CONTAINER_STATE_BUFFERFULL, this.onBufferFull)
       this._hasEvent('loadedmetadata') && this.listenTo(this.__container, Events.CONTAINER_LOADEDMETADATA, this.onLoadedMetadata)
       this._hasEvent('volume') && this.listenTo(this.__container, Events.CONTAINER_VOLUME, (event) => this.onVolumeChanged(event))
-      this._hasEvent('fullscreen') && this.listenTo(this.__container, Events.CONTAINER_FULLSCREEN, this.onFullscreen)
+      this._hasEvent('fullscreen') && this.listenTo(this.core, Events.CORE_FULLSCREEN, this.onCoreFullscreen)
       this._hasEvent('playbackstate') && this.listenTo(this.__container, Events.CONTAINER_PLAYBACKSTATE, this.onPlaybackChanged)
       this._hasEvent('highdefinitionupdate') && this.listenTo(this.__container, Events.CONTAINER_HIGHDEFINITIONUPDATE, this.onHD)
       this._hasEvent('playbackdvrstatechanged') && this.listenTo(this.__container, Events.CONTAINER_PLAYBACKDVRSTATECHANGED, this.onDVR)
@@ -352,9 +352,9 @@ export default class GaEventsPlugin extends CorePlugin {
     }, 400)
   }
 
-  onFullscreen() {
-    // TODO: create Clappr PR to add missing boolean argument to CONTAINER_FULLSCREEN event
-    this.gaEvent(this._category, this._action('fullscreen'), this._label)
+  onCoreFullscreen(isFullscreen) {
+    let v = isFullscreen ? 1 : 0
+    this.gaEvent(this._category, this._action('fullscreen'), this._label, this._value(v))
   }
 
   onPlaybackChanged(playbackState) {
