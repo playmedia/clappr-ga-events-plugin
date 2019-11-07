@@ -85,6 +85,8 @@ If this option is enabled, the eventValue is set to :
 * player "seek to" position value in seconds for `seek` event
 * player volume percent value for `volume` event
 
+If playback type is __LIVE__, the eventValue is set to elapsed since __play__ event in seconds. _(It use a Timer instead of referring to player position)_
+
 ```javascript
   /* [...] */
   gaEventsPlugin: {
@@ -94,7 +96,7 @@ If this option is enabled, the eventValue is set to :
   /* [...] */
 ```
 
-__Note:__ The event value is truncated using [parseInt()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt) function to convert to integer. If container playback type is LIVE, the player position value always equals zero.
+__Note:__ The event value is truncated using [parseInt()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt) function to convert to integer.
 
 ## eventToTrack
 
