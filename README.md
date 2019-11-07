@@ -82,10 +82,10 @@ it's __strongly recommended__ to set this option. Using video source as event la
 If this option is enabled, the eventValue is set to :
 
 * player position value in seconds for `play`, `pause`, `stop` and `ended` events
-* player "seek to" position value in seconds for `seek` event
+* player "seek to" position value in seconds for `seek` event _(may be an unexpected value for LIVE playback with DVR)_
 * player volume percent value for `volume` event
 
-If playback type is __LIVE__, the eventValue is set to elapsed since __play__ event in seconds. _(It use a Timer instead of referring to player position)_
+If playback type is __LIVE__, the eventValue is set to elapsed duration since __play__ event in seconds. _(It use a Timer instead of referring to player position)_
 
 ```javascript
   /* [...] */
@@ -97,6 +97,30 @@ If playback type is __LIVE__, the eventValue is set to elapsed since __play__ ev
 ```
 
 __Note:__ The event value is truncated using [parseInt()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt) function to convert to integer.
+
+## eventValueAsLive
+
+`eventValueAsLive` __optional__ property is a boolean which indicate if "on demand" playback is handled as __LIVE__ playback. Default value is `false`.
+
+If this option and `eventValueAuto` are enabled, the eventValue is always set to elapsed duration since __play__ event in seconds.
+
+For consistency, `play` event value is set to 0 _(same as LIVE playback)_ but `ended` event value is still set to position. _(ie: duration)_
+
+This option may be usefull, for example, to track the playing time of "on demand" playback. _(stop & pause event values)_
+
+This option does __NOT__ affect `progressSeconds`, `progressPercent` and `progressEachSeconds` behaviours.
+
+```javascript
+  /* [...] */
+  gaEventsPlugin: {
+    trackingId: 'UA-XXXX-Y',
+    eventValueAuto: true,
+    eventValueAsLive: true,
+  }
+  /* [...] */
+```
+
+__Note:__ This option is ignored if playback type is __LIVE__. _(eventValueAuto option default behaviour)_
 
 ## eventToTrack
 
