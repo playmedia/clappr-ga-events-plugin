@@ -229,8 +229,7 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   processGaPercent(pos) {
-    // FIXME: check if (duration > 0) ?
-    let percent = this.trunc((pos * 100) / this.duration)
+    let percent = this.duration > 0 ? this.trunc((pos * 100) / this.duration) : 0
     $.each(this._gaPercent, (i, v) => {
       // Percentage value may never match expected value. To fix that, we compare to previous and current.
       // This introduce a small approximation, but this function is called multiples time per seconds.
@@ -271,8 +270,8 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   get _withProgressTimer() {
-    // LIVE playback type and at least one of the two options enabled
-    return this.isLive && (this._processGaSeconds || this._processGaEachSeconds)
+    // LIVE playback type and at least one option enabled
+    return this.isLive && (this._processGaSeconds || this._processGaEachSeconds || this._setValue)
   }
 
   _startProgressTimer() {
@@ -298,34 +297,38 @@ export default class GaEventsPlugin extends CorePlugin {
     this._progressTimerStarted = false
   }
 
-  onSeek(pos) {
-    this._hasEvent('seek') && this.gaEvent(this._category, this._action('seek', this.trunc(pos)), this._label, this._value(this.trunc(pos)))
+  onSeek(seekPosition) {
+    let pos = this.isLive ? this._progressTimerElapsed : this.trunc(seekPosition)
+    this._hasEvent('seek') && this.gaEvent(this._category, this._action('seek', pos), this._label, this._value(pos))
     if (this._gaPlayOnce) this._doSendPlay = true
 
     // Adjust previous "percent" event value
     if (!this.isLive && this._processGaPercent) {
-      this._gaPercentPrev = this.trunc((this.trunc(pos) * 100) / this.duration) - 1
+      this._gaPercentPrev = this.trunc((pos * 100) / this.duration) - 1
     }
 
     this._withProgressTimer && this._stopProgressTimer()
   }
 
   onPause() {
-    this._hasEvent('pause') && this.gaEvent(this._category, this._action('pause', this.position), this._label, this._value(this.position))
+    let pos = this.isLive ? this._progressTimerElapsed : this.position
+    this._hasEvent('pause') && this.gaEvent(this._category, this._action('pause', pos), this._label, this._value(pos))
     if (this._gaPlayOnce) this._doSendPlay = true
 
     this._withProgressTimer && this._stopProgressTimer()
   }
 
   onStop() {
-    this._hasEvent('stop') && this.gaEvent(this._category, this._action('stop', this.position), this._label, this._value(this.position))
+    let pos = this.isLive ? this._progressTimerElapsed : this.position
+    this._hasEvent('stop') && this.gaEvent(this._category, this._action('stop', this.position), this._label, this._value(pos))
     if (this._gaPlayOnce) this._doSendPlay = true
 
     this._withProgressTimer && this._stopProgressTimer()
   }
 
   onEnded() {
-    this._hasEvent('ended') && this.gaEvent(this._category, this._action('ended', this.position), this._label, this._value(this.position))
+    let pos = this.isLive ? this._progressTimerElapsed : this.position
+    this._hasEvent('ended') && this.gaEvent(this._category, this._action('ended', pos), this._label, this._value(pos))
     if (this._gaPlayOnce) this._doSendPlay = true
 
     // Check for video ended progress events
