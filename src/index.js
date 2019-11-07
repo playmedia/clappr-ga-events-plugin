@@ -344,11 +344,11 @@ export default class GaEventsPlugin extends CorePlugin {
     this._processGaPercent && this.processGaPercent(this.duration)
   }
 
-  onVolumeChanged(e) {
+  onVolumeChanged(percent) {
     // Rate limit to avoid HTTP hammering
     clearTimeout(this._volumeTimer)
     this._volumeTimer = setTimeout(() => {
-      this.gaEvent(this._category, this._action('volume', this.trunc(e)), this._label, this._value(this.trunc(e)))
+      this.gaEvent(this._category, this._action('volume', this.trunc(percent)), this._label, this._value(this.trunc(percent)))
     }, 400)
   }
 
