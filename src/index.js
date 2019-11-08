@@ -1,6 +1,6 @@
 // Clappr player is Copyright 2014 Globo.com Player authors. All rights reserved.
 
-import {CorePlugin, Events, Playback, $} from 'clappr'
+import {Browser, CorePlugin, Events, Playback, $} from 'clappr'
 import gaTrackingSnippet from './ga-tracking'
 
 export default class GaEventsPlugin extends CorePlugin {
@@ -10,6 +10,7 @@ export default class GaEventsPlugin extends CorePlugin {
     super(core)
     this._volumeTimer = null
     this._doSendPlay = true
+    this._isIos = Browser.isiOS
     this.readPluginConfig(this.options.gaEventsPlugin)
     gaTrackingSnippet(this._gaCfg.name, this._gaCfg.debug, this._gaCfg.trace, (r) => {
       r && this._ga('create', this._trackingId, this._createFieldsObject)
@@ -86,7 +87,21 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   gaEvent(category, action, label, value) {
-    this._ga(this._send, 'event', category, action, label, value)
+    let obj = {
+      eventCategory: category,
+      eventAction: action,
+      eventLabel: label,
+      eventValue: value,
+    }
+
+    // Check if next event must use "beacon" transport
+    // https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#transport
+    if (this._gaBeacon) {
+      obj.transport = 'beacon'
+      this._gaBeacon = false
+    }
+
+    this._ga(this._send, 'event', obj)
   }
 
   gaException(desc, isFatal=false) {
@@ -118,6 +133,8 @@ export default class GaEventsPlugin extends CorePlugin {
     this._gaPlayOnce = cfg.sendPlayOnce === true
     this._gaEx = cfg.sendExceptions === true
     this._gaExDesc = cfg.sendExceptionsMsg === true
+
+    if (cfg.stopOnLeave === true) this.stopOnLeave()
 
     // Add 'error' to tracked events if GA exceptions are enabled
     if (this._gaEx && !this._hasEvent('error')) this._events.push('error')
@@ -395,5 +412,37 @@ export default class GaEventsPlugin extends CorePlugin {
     } else {
       this.gaEvent(this._category, this._action('error'), this._label)
     }
+  }
+
+  stopOnLeave() {
+    if (this._stopOnLeave) return
+
+    this._stopOnLeave = e => {
+      if (!this.isPlaying) {
+        return
+      }
+
+      this._gaBeacon = true
+
+      // Event listener method is directly called on iOS devices
+      // because "pagehide" event is too short to stop player
+      if (this._isLive) {
+        this._isIos && this.onStop() || this.__container.stop()
+      } else {
+        this._isIos && this.onPause() || this.__container.pause()
+      }
+    }
+
+    this._stopOnLeaveEvent = this._isIos ? 'pagehide' : 'beforeunload'
+
+    window.addEventListener(this._stopOnLeaveEvent, this._stopOnLeave)
+  }
+
+  destroy() {
+    if (this._stopOnLeave) {
+      window.removeEventListener(this._stopOnLeaveEvent, this._stopOnLeave)
+      this._stopOnLeave = null
+    }
+    super.destroy()
   }
 }
