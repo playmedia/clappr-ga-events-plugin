@@ -188,6 +188,14 @@ If this option is set to `true`, the "play" event is send only once after video 
   /* [...] */
 ```
 
+## stopOnLeave
+
+`stopOnLeave` __optional__ property is a boolean which indicate if player is paused or stopped when user decides to leave the page. Default value is `false`.
+
+If this option is set to `true`, "beacon" [transport](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#transport) will be used (if available) to __attempt__ to send the event.
+
+__Note:__ this option may not be supported by all browsers, and therefore is not guaranteed to work.
+
 ## sendExceptions
 
 `sendExceptions` __optional__ property is a boolean which indicate if container `error` events are send to Google Analytics using [Exception](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#exception) ("exception" hit type). Default value is `false`. _(default behaviour, if "error" is tracked, is to use "send" hit type like other player events)_
