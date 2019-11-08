@@ -82,8 +82,11 @@ it's __strongly recommended__ to set this option. Using video source as event la
 If this option is enabled, the eventValue is set to :
 
 * player position value in seconds for `play`, `pause`, `stop` and `ended` events
-* player "seek to" position value in seconds for `seek` event
+* player "seek to" position value in seconds for `seek` event _(may be an unexpected value for LIVE playback with DVR)_
 * player volume percent value for `volume` event
+* 0 or 1 for `fullscreen`, `highdefinitionupdate`, and `playbackdvrstatechanged` events
+
+If playback type is __LIVE__, the eventValue is set to elapsed duration since __play__ event in seconds. _(It use a Timer instead of referring to player position)_
 
 ```javascript
   /* [...] */
@@ -94,7 +97,31 @@ If this option is enabled, the eventValue is set to :
   /* [...] */
 ```
 
-__Note:__ The event value is truncated using [parseInt()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt) function to convert to integer. If container playback type is LIVE, the player position value always equals zero.
+__Note:__ The event value is truncated using [parseInt()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt) function to convert to integer.
+
+## eventValueAsLive
+
+`eventValueAsLive` __optional__ property is a boolean which indicate if "on demand" playback is handled as __LIVE__ playback. Default value is `false`.
+
+If this option and `eventValueAuto` are enabled, the eventValue is always set to elapsed duration since __play__ event in seconds.
+
+For consistency, `play` event value is set to 0 _(same as LIVE playback)_ but `ended` event value is still set to position. _(ie: duration)_
+
+This option may be usefull, for example, to track the playing time of "on demand" playback. _(stop & pause event values)_
+
+This option does __NOT__ affect `progressSeconds`, `progressPercent` and `progressEachSeconds` behaviours.
+
+```javascript
+  /* [...] */
+  gaEventsPlugin: {
+    trackingId: 'UA-XXXX-Y',
+    eventValueAuto: true,
+    eventValueAsLive: true,
+  }
+  /* [...] */
+```
+
+__Note:__ This option is ignored if playback type is __LIVE__. _(eventValueAuto option default behaviour)_
 
 ## eventToTrack
 
@@ -102,7 +129,7 @@ __Note:__ The event value is truncated using [parseInt()](https://developer.mozi
 
 __Note:__ the list of available events is `['ready', 'buffering', 'bufferfull', 'loadedmetadata', 'play', 'seek', 'pause', 'stop', 'ended', 'volume', 'fullscreen', 'error', 'playbackstate', 'highdefinitionupdate', 'playbackdvrstatechanged']`. _This is not the complete Clappr container event list. If you think one or more event is needed, just open an issue or a pull request._
 
-Keep in mind that "Web Property / Property / Tracking ID" limit is 10 million hits per month per property. For more details, read [Google Analytics Collection Limits and Quotas](https://developers.google.com/analytics/devguides/collection/analyticsjs/limits-quotas).
+Keep in mind that Analytics limit is 200,000 hits per __user__ per day and 500 hits per __session__. For more details, read [Google Analytics Collection Limits and Quotas](https://developers.google.com/analytics/devguides/collection/analyticsjs/limits-quotas).
 
 ```javascript
   /* [...] */
@@ -160,6 +187,14 @@ If this option is set to `true`, the "play" event is send only once after video 
   }
   /* [...] */
 ```
+
+## stopOnLeave
+
+`stopOnLeave` __optional__ property is a boolean which indicate if player is paused or stopped when user decides to leave the page. Default value is `false`.
+
+If this option is set to `true`, "beacon" [transport](https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#transport) will be used (if available) to __attempt__ to send the event.
+
+__Note:__ this option may not be supported by all browsers, and therefore is not guaranteed to work.
 
 ## sendExceptions
 
