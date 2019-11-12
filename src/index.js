@@ -238,14 +238,14 @@ export default class GaEventsPlugin extends CorePlugin {
   processGaSeconds(pos) {
     if (this._gaSecondsPrev !== pos && this._gaSeconds.indexOf(pos) !== -1) {
       this._gaSecondsPrev = pos
-      this.gaEvent(this._gaSecondsCat, this._gaSecondsAct(pos), this._label)
+      this.gaEvent(this._gaSecondsCat, this._gaSecondsAct(pos), this._label, this._value(pos))
     }
   }
 
   processGaEachSeconds(pos) {
     if (pos > 0 && this._gaEachSecondsPrev !== pos && pos % this._gaEachSeconds === 0) {
       this._gaEachSecondsPrev = pos
-      this.gaEvent(this._gaSecondsCat, this._gaEachSecondsAct(pos), this._label)
+      this.gaEvent(this._gaSecondsCat, this._gaEachSecondsAct(pos), this._label, this._value(pos))
     }
   }
 
@@ -255,7 +255,7 @@ export default class GaEventsPlugin extends CorePlugin {
       // Percentage value may never match expected value. To fix that, we compare to previous and current.
       // This introduce a small approximation, but this function is called multiples time per seconds.
       if (this._gaPercentPrev < v && percent >= v) {
-        this.gaEvent(this._gaPercentCat, this._gaPercentAct(v), this._label)
+        this.gaEvent(this._gaPercentCat, this._gaPercentAct(v), this._label, this._value(v))
 
         return false
       }
