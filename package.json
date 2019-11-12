@@ -1,6 +1,6 @@
 {
   "name": "clappr-ga-events-plugin",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Google Analytics Events plugin for Clappr player.",
   "main": "dist/clappr-ga-events-plugin.js",
   "scripts": {
