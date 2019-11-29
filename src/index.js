@@ -308,8 +308,10 @@ export default class GaEventsPlugin extends CorePlugin {
 
     this._progressTimerId = setInterval(() => {
       this._progressTimerElapsed++
-      this._isLive && this._processGaSeconds && this.processGaSeconds(this._progressTimerElapsed)
-      this._isLive && this._processGaEachSeconds && this.processGaEachSeconds(this._progressTimerElapsed)
+      if (this.isPlaying) {
+        this._isLive && this._processGaSeconds && this.processGaSeconds(this._progressTimerElapsed)
+        this._isLive && this._processGaEachSeconds && this.processGaEachSeconds(this._progressTimerElapsed)
+      }
     }, 1000)
   }
 
