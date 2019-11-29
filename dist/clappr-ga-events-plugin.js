@@ -1927,8 +1927,11 @@ function (_CorePlugin) {
       this._isLive && this._processGaEachSeconds && this.processGaEachSeconds(this._progressTimerElapsed);
       this._progressTimerId = setInterval(function () {
         _this4._progressTimerElapsed++;
-        _this4._isLive && _this4._processGaSeconds && _this4.processGaSeconds(_this4._progressTimerElapsed);
-        _this4._isLive && _this4._processGaEachSeconds && _this4.processGaEachSeconds(_this4._progressTimerElapsed);
+
+        if (_this4.isPlaying) {
+          _this4._isLive && _this4._processGaSeconds && _this4.processGaSeconds(_this4._progressTimerElapsed);
+          _this4._isLive && _this4._processGaEachSeconds && _this4.processGaEachSeconds(_this4._progressTimerElapsed);
+        }
       }, 1000);
     }
   }, {
