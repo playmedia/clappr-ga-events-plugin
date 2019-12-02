@@ -1642,6 +1642,7 @@ function (_CorePlugin) {
     _this = _possibleConstructorReturn(this, _getPrototypeOf(GaEventsPlugin).call(this, core));
     _this._volumeTimer = null;
     _this._doSendPlay = true;
+    _this._isStopped = false;
     _this._isIos = _clappr.Browser.isiOS;
 
     _this.readPluginConfig(_this.options.gaEventsPlugin);
@@ -1912,6 +1913,7 @@ function (_CorePlugin) {
 
       var pos = this._asLive ? 0 : this.position;
       this._hasEvent('play') && this.gaEvent(this._category, this._action('play', pos), this._label, this._value(pos));
+      this._isStopped = false;
       this._withProgressTimer && this._startProgressTimer();
     }
   }, {
@@ -1959,6 +1961,8 @@ function (_CorePlugin) {
   }, {
     key: "onPause",
     value: function onPause() {
+      // Avoid to trigger "pause" event after "stop" event (Clappr 0.2.x fix)
+      if (this._isStopped) return;
       var pos = this._isLive || this._asLive ? this._progressTimerElapsed : this.position;
       this._hasEvent('pause') && this.gaEvent(this._category, this._action('pause', pos), this._label, this._value(pos));
       if (this._gaPlayOnce) this._doSendPlay = true;
@@ -1970,6 +1974,7 @@ function (_CorePlugin) {
       var pos = this._isLive || this._asLive ? this._progressTimerElapsed : this.position;
       this._hasEvent('stop') && this.gaEvent(this._category, this._action('stop', this.position), this._label, this._value(pos));
       if (this._gaPlayOnce) this._doSendPlay = true;
+      this._isStopped = true;
       this._withProgressTimer && this._stopProgressTimer();
     }
   }, {
