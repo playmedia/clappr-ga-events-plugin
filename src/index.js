@@ -10,6 +10,7 @@ export default class GaEventsPlugin extends CorePlugin {
     super(core)
     this._volumeTimer = null
     this._doSendPlay = true
+    this._isStopped = false
     this._isIos = Browser.isiOS
     this.readPluginConfig(this.options.gaEventsPlugin)
     gaTrackingSnippet(this._gaCfg.name, this._gaCfg.debug, this._gaCfg.trace, (r) => {
@@ -287,6 +288,7 @@ export default class GaEventsPlugin extends CorePlugin {
 
     let pos = this._asLive ? 0 : this.position
     this._hasEvent('play') && this.gaEvent(this._category, this._action('play', pos), this._label, this._value(pos))
+    this._isStopped = false
 
     this._withProgressTimer && this._startProgressTimer()
   }
@@ -337,6 +339,9 @@ export default class GaEventsPlugin extends CorePlugin {
   }
 
   onPause() {
+    // Avoid to trigger "pause" event after "stop" event (Clappr 0.2.x fix)
+    if (this._isStopped) return
+
     let pos = this._isLive || this._asLive ? this._progressTimerElapsed : this.position
     this._hasEvent('pause') && this.gaEvent(this._category, this._action('pause', pos), this._label, this._value(pos))
     if (this._gaPlayOnce) this._doSendPlay = true
@@ -348,6 +353,7 @@ export default class GaEventsPlugin extends CorePlugin {
     let pos = this._isLive || this._asLive ? this._progressTimerElapsed : this.position
     this._hasEvent('stop') && this.gaEvent(this._category, this._action('stop', this.position), this._label, this._value(pos))
     if (this._gaPlayOnce) this._doSendPlay = true
+    this._isStopped = true
 
     this._withProgressTimer && this._stopProgressTimer()
   }
