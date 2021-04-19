@@ -24,7 +24,7 @@
     "babel-loader": "^8.0",
     "babel-plugin-add-module-exports": "^1.0",
     "core-js": "^3.3",
-    "terser-webpack-plugin": "^2.3",
+    "terser-webpack-plugin": "^4.0",
     "webpack": "^4.0",
     "webpack-build-notifier": "^2.1.1",
     "webpack-cli": "^3.3",
