@@ -28,6 +28,6 @@
     "webpack": "^5.94",
     "webpack-build-notifier": "^2.1.1",
     "webpack-cli": "^3.3",
-    "webpack-dev-server": "^3.8"
+    "webpack-dev-server": "^5.2"
   }
 }
